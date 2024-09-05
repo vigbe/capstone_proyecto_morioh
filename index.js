@@ -35,9 +35,34 @@ app.post('/login', async (req, res) => {
     }
 });
 
+// Nueva ruta para manejar el registro de usuarios
+app.post('/register', async (req, res) => {
+    const { email, password } = req.body;
+
+    try {
+        const { data, error } = await supabase.auth.signUp({
+            email,
+            password,
+        });
+
+        if (error) {
+            return res.status(400).json({ error: error.message });
+        }
+
+        res.json({ data });
+    } catch (err) {
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
 // Ruta principal
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/public/login.html');
+});
+
+// Ruta para la página de registro
+app.get('/register', (req, res) => {
+    res.sendFile(__dirname + '/public/register.html');
 });
 
 // Iniciar el servidor en el puerto 3000
