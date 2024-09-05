@@ -5,6 +5,11 @@ document.getElementById('registerForm').addEventListener('submit', async functio
     const email = document.getElementById('registerEmail').value;
     const password = document.getElementById('registerPassword').value;
     const errorMessage = document.getElementById('registerErrorMessage');
+    const registerButton = event.target.querySelector('button');
+
+    // Deshabilitar el botón mientras se procesa la solicitud
+    registerButton.disabled = true;
+    errorMessage.textContent = ''; // Limpiar mensaje de error previo
 
     try {
         const response = await fetch('/register', {
@@ -19,12 +24,19 @@ document.getElementById('registerForm').addEventListener('submit', async functio
 
         if (response.ok) {
             alert('Cuenta creada exitosamente!');
-            // Redirigir al login después de crear la cuenta
             window.location.href = '/';
         } else {
-            errorMessage.textContent = data.error || 'Registro fallido. Intenta nuevamente.';
+            // Mostrar un mensaje de error más amigable para el usuario
+            if (data.error.includes('Email rate limit exceeded')) {
+                errorMessage.textContent = 'Demasiados intentos con este correo. Por favor, espera unos minutos antes de intentarlo nuevamente.';
+            } else {
+                errorMessage.textContent = data.error || 'Registro fallido. Intenta nuevamente.';
+            }
         }
     } catch (error) {
         errorMessage.textContent = 'Ocurrió un error. Intenta nuevamente.';
+    } finally {
+        // Rehabilitar el botón después de procesar
+        registerButton.disabled = false;
     }
 });
