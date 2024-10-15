@@ -8,7 +8,7 @@ app.use(express.static(path.join(__dirname, 'dist')));
 
 // Redirigir todas las solicitudes al index.html para que Vue Router se encargue de la navegación
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+  res.sendFile(path.join(__dirname, 'dist', 'Login.vue'));
 });
 
 // Puerto asignado por Heroku
