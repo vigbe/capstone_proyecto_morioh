@@ -1,7 +1,7 @@
-<template>
+  <template>
     <div class="login">
       <div class="title-container">
-        <h1 class="title">Login en la página</h1>
+        <h1 class="title">Inicia sesión</h1>
       </div>  
       <form @submit.prevent="login" class="form">
         <label class="form-label" for="email">Correo Electrónico:</label>
@@ -128,7 +128,7 @@
   .title {
     text-align: center;
     color: #1ab188;
-    font-size: 1.5rem;
+    font-size: 2.0rem;
     font-weight: 700;
     margin-bottom: 1rem;
   }

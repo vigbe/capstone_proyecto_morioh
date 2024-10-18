@@ -1,8 +1,9 @@
 <template>
     <div class="register">
-      <h1 class="title">Registro de Usuario</h1>
+      <div class="title-container">
+        <h1 class="title">Registro de Usuario</h1>
+      </div>  
       <form @submit.prevent="register" class="form">
-        <div class="form-group">
           <label class="form-label" for="email">Correo Electrónico</label>
           <input
             class="form-input"
@@ -12,31 +13,26 @@
             required
             placeholder="Correo Electrónico"
           />
-        </div>
   
-        <div class="form-group">
-          <label class="form-label" for="password">Contraseña</label>
-          <input
-            class="form-input"
-            type="password"
-            id="password"
-            v-model="password"
-            required
-            placeholder="Contraseña"
-          />
-        </div>
-  
-        <div class="form-group">
-          <label class="form-label" for="confirmPassword">Confirmar Contraseña</label>
-          <input
-            class="form-input"
-            type="password"
-            id="confirmPassword"
-            v-model="confirmPassword"
-            required
-            placeholder="Confirmar Contraseña"
-          />
-        </div>
+        <label class="form-label" for="password">Contraseña</label>
+        <input
+          class="form-input"
+          type="password"
+          id="password"
+          v-model="password"
+          required
+          placeholder="Contraseña"
+        />
+        
+        <label class="form-label" for="confirmPassword">Confirmar Contraseña</label>
+        <input
+          class="form-input"
+          type="password"
+          id="confirmPassword"
+          v-model="confirmPassword"
+          required
+          placeholder="Confirmar Contraseña"
+        />
   
         <div class="form-submit-container">
           <input class="form-submit" type="submit" value="Registrar" />
@@ -47,6 +43,9 @@
         </div>
         <div v-if="errorMessage" class="error-message">
           {{ errorMessage }}
+        </div>
+        <div class="form-link">
+          <label>¿Ya tienes una cuenta? <router-link to="/">Inicia sesión aquí</router-link></label>
         </div>
       </form>
     </div>
@@ -123,52 +122,85 @@ export default {
     font-family: 'Roboto', sans-serif;
   }
   
+  html, body, #app {
+    height: 100%;
+  }
+
+  body {
+    margin: 0 !important;
+  }
+
   .register {
     padding: 2rem;
+    background: linear-gradient(135deg, #1ab188, #13232f);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    justify-content: center;
+    width: 100%;
   }
+
   .title {
     text-align: center;
+    color: #1ab188;
+    font-size: 2.0rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
   }
-  .form {
-    margin: 3rem auto;
+
+  .title-container {
+    margin: 0 auto;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    width: 20%;
-    min-width: 350px;
-    max-width: 100%;
+    width: 100%;
+    max-width: 400px;
     background-color: rgba(19, 35, 47, 0.9);
-    border-radius: 5px;
+    border-radius: 5px 5px 0 0;
+    padding: 10px;
+    box-shadow: 0 4px 10px 4px rgba(0, 0, 0, 0.3);
+  }
+  .form {
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width: 100%;
+    max-width: 400px;
+    background-color: rgba(19, 35, 47, 0.9);
+    border-radius: 0 0 5px 5px;
     padding: 40px;
     box-shadow: 0 4px 10px 4px rgba(0, 0, 0, 0.3);
   }
-  .form-group {
-    margin-bottom: 2rem;
-  }
+
   .form-label {
+    margin-top: 2rem;
     color: white;
-    margin-bottom: 1rem;
-    display: block;
+    margin-bottom: 0.5rem;
+    &:first-of-type {
+      margin-top: 0rem;
+    }
   }
   .form-input {
     padding: 10px 15px;
-    background-color: #f2f2f2;
+    background: none;
     background-image: none;
-    border: 1px solid #dcdcdc;
-    color: #333;
+    border: 1px solid white;
+    color: white;
     &:focus {
       outline: 0;
       border-color: #1ab188;
     }
   }
+
   .form-submit-container {
     position: relative;
     display: flex;
     align-items: center;
-    justify-content: center;
     margin-top: 3rem;
-    width: 100%;
   }
+
   .form-submit {
     background-color: #1ab188;
     border: none;
@@ -181,6 +213,7 @@ export default {
       background-color: #0b9185;
     }
   }
+
   .loader {
     border: 4px solid #f3f3f3;
     border-top: 4px solid #1ab188;
@@ -202,8 +235,6 @@ export default {
     color: #1ab188;
     margin-left: 10px;
     font-weight: bold;
-    width: 100%;
-    justify-content: center;
   }
   
   .error-message {
@@ -211,11 +242,13 @@ export default {
     margin-top: 1rem;
     text-align: center;
   }
+
   .form-link {
     text-align: center;
     margin-top: 2rem;
     color: white;
   }
+
   .form-link a {
     color: #1ab188;
     text-decoration: underline;

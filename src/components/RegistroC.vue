@@ -1,6 +1,8 @@
 <template>
     <div class="register-complete">
-      <h1 class="title">Registro Completo de Usuario</h1>
+      <div class="title-container">
+        <h1 class="title">Completar Registro</h1>
+      </div> 
       <form @submit.prevent="completeRegistration" class="form">
         <div class="form-group">
           <label class="form-label" for="tipoUsuario">Tipo de Usuario</label>
@@ -183,20 +185,35 @@ export default {
     font-family: 'Roboto', sans-serif;
   }
   
+  html, body, #app {
+    height: 100%;
+  }
+  
+  body {
+    margin: 0 !important;
+  }
+
   .register-complete {
     padding: 2rem;
+    background: linear-gradient(135deg, #1ab188, #13232f);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    justify-content: center;
+    width: 100%;
   }
+  
   .title {
     text-align: center;
   }
   .form {
-    margin: 3rem auto;
+    margin: 0 auto;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    width: 20%;
-    min-width: 350px;
-    max-width: 100%;
+    width: 100%;
+    max-width: 400px;
     background-color: rgba(19, 35, 47, 0.9);
     border-radius: 5px;
     padding: 40px;
@@ -265,7 +282,28 @@ export default {
     width: 100%;
     justify-content: center;
   }
-  
+    
+  .title {
+    text-align: center;
+    color: #1ab188;
+    font-size: 2.0rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+  }
+
+  .title-container {
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width: 100%;
+    max-width: 400px;
+    background-color: rgba(19, 35, 47, 0.9);
+    border-radius: 5px 5px 0 0;
+    padding: 10px;
+    box-shadow: 0 4px 10px 4px rgba(0, 0, 0, 0.3);
+  }
+
   .error-message {
     color: #ff6b6b;
     margin-top: 1rem;
