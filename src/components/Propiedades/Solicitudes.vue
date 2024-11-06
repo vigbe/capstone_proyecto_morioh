@@ -145,34 +145,37 @@ export default {
   methods: {
     async fetchUserData(userId) {
       try {
-        const { data: brokerData, error: brokerError } = await supabase
+        let { data: brokerData, error: brokerError } = await supabase
           .from('broker')
           .select('*')
           .eq('user_id', userId)
           .single();
-        if (brokerError) throw brokerError;
-
+        if (brokerError) {
+          throw brokerError;
+        }
         if (brokerData) {
           this.userName = brokerData.nombre;
           this.userType = 'Broker';
           this.id_broker = brokerData.id_broker;
-          this.newSolicitud.id_broker = brokerData.id_broker;
           return;
         }
-
-        const { data: inmobiliariaData, error: inmobiliariaError } = await supabase
+      } catch (error) {
+        console.error('Error fetching user data:', error.message);
+      }
+      try {
+        let { data: inmobiliariaData, error: inmobiliariaError } = await supabase
           .from('inmobiliaria')
           .select('*')
           .eq('user_id', userId)
           .single();
-        if (inmobiliariaError) throw inmobiliariaError;
-
+        if (inmobiliariaError) {
+          throw inmobiliariaError;
+        }
         if (inmobiliariaData) {
           this.userName = inmobiliariaData.nombre;
           this.userType = 'Inmobiliaria';
           this.id_inmobiliaria = inmobiliariaData.id_inmobiliaria;
-          this.newSolicitud.id_inmobiliaria = inmobiliariaData.id_inmobiliaria;
-          this.filterProperties();
+          this.newSolicitud.id_inmobiliaria = inmobiliariaData.id_inmobiliaria; // Precarga el id_inmobiliaria
         }
       } catch (error) {
         console.error('Error fetching user data:', error.message);
