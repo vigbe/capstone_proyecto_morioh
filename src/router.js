@@ -5,6 +5,7 @@ import Registro from './components/Login/Registro.vue';
 import RegistroC from './components/Login/RegistroC.vue';
 import MarketPlace from './components/Propiedades/MarketPlace.vue';
 import Solicitudes from './components/Propiedades/Solicitudes.vue';
+import Clientes from './components/Propiedades/Clientes.vue';
 
 const routes = [
   {
@@ -36,7 +37,12 @@ const routes = [
     path: '/solicitudes',
     name: 'Solicitudes',
     component: Solicitudes
-  }
+  },
+  {
+    path: '/clientes',
+    name: 'Clientes',
+    component: Clientes
+  },
 ];
 
 const router = createRouter({
