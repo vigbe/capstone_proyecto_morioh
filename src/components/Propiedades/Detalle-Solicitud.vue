@@ -63,6 +63,15 @@
           </tbody>
         </table>
       </div>
+    
+        <!-- Overlay de subida de archivos -->
+        <UploadFileOverlay
+      v-if="showOverlay"
+      :idSolicitud="solicitud.id_solicitud"
+      @close="showOverlay = false"
+      @fileUploaded="fetchArchivos"
+    />  
+
     <!-- Overlay de rechazo -->
     <RechazoOverlay
       v-if="showRechazoOverlay"
@@ -75,10 +84,11 @@
 <script>
 import supabase from '../../supabase';
 import NavBar from '../NavBar.vue';
+import UploadFileOverlay from './UploadFileOverlay.vue';
 import RechazoOverlay from './RechazoOverlay.vue';
 
 export default {
-  components: { NavBar, RechazoOverlay },
+  components: { NavBar, RechazoOverlay,UploadFileOverlay },
     props: ['id_solicitud'],
     data() {
       return {
