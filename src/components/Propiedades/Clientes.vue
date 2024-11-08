@@ -70,8 +70,8 @@
         :distritos="distritos"
         :paises="paises"
         @close="showOverlay = false"
-        @add-client="fetchClients"
-        @update-client="fetchClients"
+        @add-client="addClient"
+        @update-client="updateClient"
       />
     </div>
   </template>
@@ -137,34 +137,33 @@
         }
       },
       async fetchClients() {
-  try {
-    const { data, error } = await supabase
-      .from('cliente')
-      .select(`
-        id_cliente, nombre, apellido, email, telefono, direccion,
-        id_distrito (nombre_distrito),
-        id_pais (nombre_pais)
-      `)
-      .eq('broker_asociado', this.id_broker);
-    if (error) throw error;
-
-    this.clients = data.map(cliente => ({
-      id_cliente: cliente.id_cliente,
-      nombre: cliente.nombre,
-      apellido: cliente.apellido,
-      email: cliente.email,
-      telefono: cliente.telefono,
-      direccion: cliente.direccion,
-      id_distrito: cliente.id_distrito ? cliente.id_distrito : null,
-      id_pais: cliente.id_pais ? cliente.id_pais : null,
-      distrito_nombre: cliente.id_distrito ? cliente.id_distrito.nombre_distrito : '',
-      pais_nombre: cliente.id_pais ? cliente.id_pais.nombre_pais : '',
-    }));
-  } catch (error) {
-    console.error('Error fetching clients:', error.message);
-  }
-}
-,
+        try {
+          const { data, error } = await supabase
+            .from('cliente')
+            .select(`
+              id_cliente, nombre, apellido, email, telefono, direccion,
+              id_distrito (nombre_distrito),
+              id_pais (nombre_pais)
+            `)
+            .eq('broker_asociado', this.id_broker);
+          if (error) throw error;
+  
+          this.clients = data.map(cliente => ({
+            id_cliente: cliente.id_cliente,
+            nombre: cliente.nombre,
+            apellido: cliente.apellido,
+            email: cliente.email,
+            telefono: cliente.telefono,
+            direccion: cliente.direccion,
+            id_distrito: cliente.id_distrito ? cliente.id_distrito : null,
+            id_pais: cliente.id_pais ? cliente.id_pais : null,
+            distrito_nombre: cliente.id_distrito ? cliente.id_distrito.nombre_distrito : '',
+            pais_nombre: cliente.id_pais ? cliente.id_pais.nombre_pais : '',
+          }));
+        } catch (error) {
+          console.error('Error fetching clients:', error.message);
+        }
+      },
       openAddClientForm() {
         this.selectedClient = {
           nombre: '',
@@ -182,6 +181,50 @@
         this.selectedClient = { ...cliente };
         this.isEditing = true;
         this.showOverlay = true;
+      },
+      async addClient(clientData) {
+        try {
+          const clientRecord = {
+            nombre: clientData.nombre,
+            apellido: clientData.apellido,
+            email: clientData.email,
+            telefono: clientData.telefono,
+            direccion: clientData.direccion,
+            id_distrito: clientData.id_distrito,
+            id_pais: clientData.id_pais,
+            broker_asociado: this.id_broker
+          };
+  
+          const { data, error } = await supabase.from('cliente').insert([clientRecord]);
+          if (error) throw error;
+  
+          this.showOverlay = false;
+          await this.fetchClients();
+        } catch (error) {
+          console.error('Error adding client:', error.message);
+        }
+      },
+      async updateClient(clientData) {
+        try {
+          const { error } = await supabase.from('cliente')
+            .update({
+              nombre: clientData.nombre,
+              apellido: clientData.apellido,
+              email: clientData.email,
+              telefono: clientData.telefono,
+              direccion: clientData.direccion,
+              id_distrito: clientData.id_distrito,
+              id_pais: clientData.id_pais,
+            })
+            .eq('id_cliente', clientData.id_cliente);
+          if (error) throw error;
+  
+          this.showOverlay = false;
+          this.isEditing = false;
+          await this.fetchClients();
+        } catch (error) {
+          console.error('Error updating client:', error.message);
+        }
       },
       async deleteClient(id_cliente) {
         try {
@@ -205,6 +248,7 @@
     }
   };
   </script>
+  
   
   <style scoped>
   /* Estilos para mantener la consistencia con el componente de Solicitudes */

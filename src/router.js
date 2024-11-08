@@ -6,6 +6,7 @@ import RegistroC from './components/Login/RegistroC.vue';
 import MarketPlace from './components/Propiedades/MarketPlace.vue';
 import Solicitudes from './components/Propiedades/Solicitudes.vue';
 import Clientes from './components/Propiedades/Clientes.vue';
+import DetalleSolicitud from './components/Propiedades/Detalle-Solicitud.vue';
 
 const routes = [
   {
@@ -42,6 +43,12 @@ const routes = [
     path: '/clientes',
     name: 'Clientes',
     component: Clientes
+  },
+  {
+    path: '/solicitud/:id_solicitud',
+    name: 'DetalleSolicitud',
+    component: DetalleSolicitud,
+    props: true,
   },
 ];
 

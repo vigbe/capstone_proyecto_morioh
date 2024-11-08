@@ -1,25 +1,7 @@
 <template>
+  <NavBar />
   <div class="solicitudes">
     <!-- Barra de navegación -->
-    <nav class="nav-bar">
-      <div class="user-info-container">
-        <div class="user-info">
-          <span>{{ userName }} ({{ userType }})</span>
-        </div>
-        <div class="company-name">
-          <span>LUVI Brokers</span>
-        </div>
-      </div>
-      <div class="menu-container">
-        <div class="menu-items">
-          <router-link to="/solicitudes" class="menu-item">Solicitudes</router-link>
-          <router-link to="/marketplace" class="menu-item">Marketplace</router-link>
-          <router-link to="/clientes" class="menu-item">Clientes</router-link>
-          <router-link v-if="userType === 'Inmobiliaria'" to="/cargar-propiedades" class="menu-item">Cargar Propiedades</router-link>
-        </div>
-        <button @click="logout" class="logout-button">Cerrar Sesión</button>
-      </div>
-    </nav>
 
     <!-- Tabla de solicitudes -->
     <div class="table-container">
@@ -32,6 +14,7 @@
             <th>Estado</th>
             <th>Tipo</th>
             <th>Broker</th>
+            <th>Cliente</th>
             <th>Inmobiliaria</th>
             <th>Propiedad</th>
             <th>Acciones</th>
@@ -39,15 +22,17 @@
         </thead>
         <tbody>
           <tr v-for="solicitud in tasks" :key="solicitud.id">
-            <td>{{ solicitud.id }}</td>
-            <td>{{ formatFecha(solicitud.date) }}</td>
-            <td>{{ solicitud.stage }}</td>
+            <td>{{ solicitud.id_solicitud }}</td>
+            <td>{{ solicitud.fecha_solicitud }}</td>
+            <td>{{ solicitud.estado }}</td>
             <td>{{ solicitud.tipo }}</td>
             <td>{{ solicitud.broker_nombre }}</td>
+            <td>{{solicitud.cliente_nombre}}</td>
             <td>{{ solicitud.inmobiliaria_nombre }}</td>
             <td>{{ solicitud.propiedad_titulo }}</td>
             <td>
               <img src="@/assets/edit-icon.png" alt="Editar" title="Editar" class="action-icon" @click="editSolicitud(solicitud)" />
+              <img src="@/assets/ver-icon.png" alt="Ver" title="Ver" class="action-icon" @click="viewSolicitud(solicitud.id_solicitud)" />
               <img src="@/assets/delete-icon.png" alt="Eliminar" title="Eliminar" class="action-icon" @click="deleteSolicitud(solicitud.id)" />
             </td>
           </tr>
@@ -61,54 +46,29 @@
     </div>
 
     <!-- Overlay de formulario de solicitud -->
-    <div v-if="showOverlay" class="overlay">
-      <div class="overlay-content">
-        <h3>{{ isEditing ? 'Editar Solicitud' : 'Agregar Solicitud' }}</h3>
-        <form @submit.prevent="isEditing ? updateSolicitud() : addSolicitud()">
-          <!-- Campo de Tipo (estático) -->
-          <label>Tipo:</label>
-          <select v-model="newSolicitud.tipo" required>
-            <option value="Nuevo Cliente">Nuevo Cliente</option>
-            <option value="Venta">Venta</option>
-          </select>
-
-          <!-- Dropdown para broker (autoseleccionado y bloqueado si es broker) -->
-          <label>Broker:</label>
-          <select v-model="newSolicitud.id_broker" :disabled="userType === 'Broker'" required>
-            <option v-if="userType === 'Broker'" :value="id_broker">{{ userName }}</option>
-            <option v-else v-for="broker in brokers" :key="broker.id_broker" :value="broker.id_broker">
-              {{ broker.nombre }}
-            </option>
-          </select>
-
-          <!-- Dropdown para inmobiliaria (autoseleccionado y bloqueado si es inmobiliaria) -->
-          <label>Inmobiliaria:</label>
-          <select v-model="newSolicitud.id_inmobiliaria" :disabled="userType === 'Inmobiliaria'" @change="filterProperties" required>
-            <option v-for="inmobiliaria in inmobiliarias" :key="inmobiliaria.id_inmobiliaria" :value="inmobiliaria.id_inmobiliaria">
-              {{ inmobiliaria.nombre }}
-            </option>
-          </select>
-
-          <!-- Dropdown de propiedades filtrado por inmobiliaria seleccionada -->
-          <label>Propiedad:</label>
-          <select v-model="newSolicitud.id_propiedad" required>
-            <option v-for="propiedad in filteredProperties" :key="propiedad.id_propiedad" :value="propiedad.id_propiedad">
-              {{ propiedad.titulo }}
-            </option>
-          </select>
-
-          <button type="submit">{{ isEditing ? 'Actualizar' : 'Agregar' }}</button>
-          <button type="button" @click="showOverlay = false">Cancelar</button>
-        </form>
-      </div>
-    </div>
+    <EditFormSolicitud
+      :visible="showOverlay"
+      :isEditing="isEditing"
+      :solicitudData="newSolicitud"
+      :clientes="clientes"
+      :brokers="brokers"
+      :inmobiliarias="inmobiliarias"
+      :propiedades="propiedades"
+      :userType="userType"
+      @close="showOverlay = false"
+      @add-solicitud="addSolicitud"
+      @update-solicitud="updateSolicitud"
+     />
   </div>
 </template>
 
 <script>
 import supabase from '../../supabase';
+import NavBar from '../NavBar.vue';
+import EditFormSolicitud from './EditFormSolicitud.vue';
 
 export default {
+  components: { EditFormSolicitud,NavBar },
   data() {
     return {
       userName: '',
@@ -117,17 +77,18 @@ export default {
       id_inmobiliaria: null,
       tasks: [],
       showOverlay: false,
-      isEditing: false, // Indica si estamos editando una solicitud existente
+      isEditing: false,
       brokers: [],
       inmobiliarias: [],
       propiedades: [],
-      filteredProperties: [],  // Propiedades filtradas según la inmobiliaria seleccionada
-      editSolicitudId: null,   // ID de la solicitud que se está editando
+      clientes: [],
+      editSolicitudId: null,
       newSolicitud: {
-        id_broker: '',
-        id_inmobiliaria: '',
-        id_propiedad: '',
-        tipo: '', // Añadido campo "Tipo"
+        tipo: '',
+        id_cliente: null,
+        id_broker: null,
+        id_inmobiliaria: null,
+        id_propiedad: null,
       },
     };
   },
@@ -139,20 +100,20 @@ export default {
       await this.fetchUserData(user.id);
       await this.fetchDropdownData();
       await this.fetchSolicitudes();
-      this.setDefaultSolicitudValues(); // Establece valores por defecto para el formulario
     }
   },
   methods: {
+    viewSolicitud(id_solicitud) {
+    this.$router.push({ name: 'DetalleSolicitud', params: { id_solicitud } });
+  },
     async fetchUserData(userId) {
       try {
-        let { data: brokerData, error: brokerError } = await supabase
+        const { data: brokerData, error: brokerError } = await supabase
           .from('broker')
           .select('*')
           .eq('user_id', userId)
           .single();
-        if (brokerError) {
-          throw brokerError;
-        }
+        if (brokerError) throw brokerError;
         if (brokerData) {
           this.userName = brokerData.nombre;
           this.userType = 'Broker';
@@ -163,19 +124,17 @@ export default {
         console.error('Error fetching user data:', error.message);
       }
       try {
-        let { data: inmobiliariaData, error: inmobiliariaError } = await supabase
+        const { data: inmobiliariaData, error: inmobiliariaError } = await supabase
           .from('inmobiliaria')
           .select('*')
           .eq('user_id', userId)
           .single();
-        if (inmobiliariaError) {
-          throw inmobiliariaError;
-        }
+        if (inmobiliariaError) throw inmobiliariaError;
         if (inmobiliariaData) {
           this.userName = inmobiliariaData.nombre;
           this.userType = 'Inmobiliaria';
           this.id_inmobiliaria = inmobiliariaData.id_inmobiliaria;
-          this.newSolicitud.id_inmobiliaria = inmobiliariaData.id_inmobiliaria; // Precarga el id_inmobiliaria
+          this.newSolicitud.id_inmobiliaria = inmobiliariaData.id_inmobiliaria;
         }
       } catch (error) {
         console.error('Error fetching user data:', error.message);
@@ -194,81 +153,112 @@ export default {
         const { data: propiedadesData, error: propiedadesError } = await supabase.from('propiedad').select('id_propiedad, titulo, id_inmobiliaria');
         if (propiedadesError) throw propiedadesError;
         this.propiedades = propiedadesData;
+
+        const { data: clientesData } = await supabase.from('cliente').select('id_cliente, nombre, apellido');
+        this.clientes = clientesData || [];
       } catch (error) {
         console.error('Error fetching dropdown data:', error.message);
       }
     },
     async fetchSolicitudes() {
-      try {
-        const { data, error } = await supabase
-          .from('solicitud')
-          .select('*')
-          .eq('id_broker', this.id_broker);
-        if (error) throw error;
+  try {
+    let query = supabase.from('solicitud').select('*');
 
-        this.tasks = data.map((solicitud) => {
-          const broker = this.brokers.find(b => b.id_broker === solicitud.id_broker);
-          const inmobiliaria = this.inmobiliarias.find(i => i.id_inmobiliaria === solicitud.id_inmobiliaria);
-          const propiedad = this.propiedades.find(p => p.id_propiedad === solicitud.id_propiedad);
+    // Filtra según el tipo de usuario
+    if (this.userType === 'Broker') {
+      query = query.eq('id_broker', this.id_broker);
+    } else if (this.userType === 'Inmobiliaria') {
+      query = query.eq('id_inmobiliaria', this.id_inmobiliaria);
+    }
 
-          return {
-            id: solicitud.id_solicitud,
-            date: solicitud.fecha_solicitud,
-            stage: solicitud.estado,
-            tipo: solicitud.tipo,
-            broker_nombre: broker ? broker.nombre : '',
-            inmobiliaria_nombre: inmobiliaria ? inmobiliaria.nombre : '',
-            propiedad_titulo: propiedad ? propiedad.titulo : '',
-          };
-        });
-      } catch (error) {
-        console.error('Error fetching solicitudes:', error.message);
-      }
-    },
-    setDefaultSolicitudValues() {
-      if (this.userType === 'Broker') {
-        this.newSolicitud.id_broker = this.id_broker;
-      } else if (this.userType === 'Inmobiliaria') {
-        this.newSolicitud.id_inmobiliaria = this.id_inmobiliaria;
-        this.filterProperties();
-      }
-    },
-    filterProperties() {
-      this.filteredProperties = this.propiedades.filter(
-        propiedad => propiedad.id_inmobiliaria === this.newSolicitud.id_inmobiliaria
-      );
-    },
+    const { data, error } = await query;
+    if (error) throw error;
+
+    // Procesa los datos para mostrar en la tabla
+    this.tasks = data.map((solicitud) => {
+      const cliente = this.clientes.find(c => c.id_cliente === solicitud.id_cliente);
+      const broker = this.brokers.find(b => b.id_broker === solicitud.id_broker);
+      const inmobiliaria = this.inmobiliarias.find(i => i.id_inmobiliaria === solicitud.id_inmobiliaria);
+      const propiedad = this.propiedades.find(p => p.id_propiedad === solicitud.id_propiedad);
+
+      return {
+        id_solicitud: solicitud.id_solicitud,
+        fecha_solicitud: this.formatFecha(solicitud.fecha_solicitud),
+        estado: solicitud.estado,
+        tipo: solicitud.tipo,
+        broker_nombre: broker ? broker.nombre : '',
+        inmobiliaria_nombre: inmobiliaria ? inmobiliaria.nombre : '',
+        propiedad_titulo: propiedad ? propiedad.titulo : '',
+        cliente_nombre: cliente ? `${cliente.nombre} ${cliente.apellido}` : '',
+      };
+    });
+  } catch (error) {
+    console.error('Error fetching solicitudes:', error.message);
+  }
+}
+,
     openAddSolicitudForm() {
       this.newSolicitud = { 
-        id_broker: this.userType === 'Broker' ? this.id_broker : '', 
-        id_inmobiliaria: this.userType === 'Inmobiliaria' ? this.id_inmobiliaria : '', 
-        id_propiedad: '', 
-        tipo: '', // Nuevo campo tipo
+        tipo: '',
+        id_cliente: null,
+        id_broker: this.userType === 'Broker' ? this.id_broker : null, 
+        id_inmobiliaria: this.userType === 'Inmobiliaria' ? this.id_inmobiliaria : null, 
+        id_propiedad: null,
       };
       this.isEditing = false;
       this.showOverlay = true;
-      if (this.userType === 'Inmobiliaria') {
-        this.filterProperties();
-      }
     },
-    async addSolicitud() {
+    editSolicitud(solicitud) {
+      this.newSolicitud = {
+        tipo: solicitud.tipo,
+        id_cliente: solicitud.cliente_id,
+        id_broker: solicitud.id_broker,
+        id_inmobiliaria: solicitud.id_inmobiliaria,
+        id_propiedad: solicitud.id_propiedad,
+      };
+      this.editSolicitudId = solicitud.id_solicitud;
+      this.isEditing = true;
+      this.showOverlay = true;
+    },
+    async addSolicitud(solicitud) {
       try {
         const solicitudData = {
-          fecha_solicitud: new Date().toISOString(),
+          fecha_solicitud: new Date(),
           estado: 'Pendiente',
-          tipo: this.newSolicitud.tipo,
-          id_broker: this.newSolicitud.id_broker,
-          id_inmobiliaria: this.newSolicitud.id_inmobiliaria,
-          id_propiedad: this.newSolicitud.id_propiedad,
+          tipo: solicitud.tipo,
+          id_cliente: solicitud.cliente_id,
+          id_broker: solicitud.tipo==="Nuevo Cliente"?this.id_broker:solicitud.id_broker,
+          id_inmobiliaria: solicitud.id_inmobiliaria,
+          id_propiedad: solicitud.id_propiedad,
         };
 
-        const { error } = await supabase.from('solicitud').insert([solicitudData]);
+        const { data, error } = await supabase.from('solicitud').insert([solicitudData]);
         if (error) throw error;
 
         this.showOverlay = false;
         await this.fetchSolicitudes();
       } catch (error) {
         console.error('Error adding solicitud:', error.message);
+      }
+    },
+    async updateSolicitud(solicitud) {
+      try {
+        const { error } = await supabase.from('solicitud')
+          .update({
+            tipo: solicitud.tipo,
+            id_cliente: solicitud.cliente_id,
+            id_broker: solicitud.id_broker,
+            id_inmobiliaria: solicitud.tipo === "Nuevo Cliente" ? null : solicitud.id_inmobiliaria,
+            id_propiedad: solicitud.tipo === "Nuevo Cliente" ? null : solicitud.id_propiedad,
+          })
+          .eq('id_solicitud', this.editSolicitudId);
+        if (error) throw error;
+
+        this.showOverlay = false;
+        this.isEditing = false;
+        await this.fetchSolicitudes();
+      } catch (error) {
+        console.error('Error updating solicitud:', error.message);
       }
     },
     async deleteSolicitud(id) {
@@ -281,56 +271,17 @@ export default {
         console.error('Error deleting solicitud:', error.message);
       }
     },
-    editSolicitud(solicitud) {
-      this.newSolicitud = { 
-        id_broker: solicitud.id_broker, 
-        id_inmobiliaria: solicitud.id_inmobiliaria, 
-        id_propiedad: solicitud.id_propiedad,
-        tipo: solicitud.tipo, // Editar tipo
-      };
-      this.editSolicitudId = solicitud.id;
-      this.isEditing = true;
-      this.showOverlay = true;
-      this.filterProperties();
-    },
-    async updateSolicitud() {
-      try {
-        const { error } = await supabase.from('solicitud')
-          .update({
-            id_broker: this.newSolicitud.id_broker,
-            id_inmobiliaria: this.newSolicitud.id_inmobiliaria,
-            id_propiedad: this.newSolicitud.id_propiedad,
-            tipo: this.newSolicitud.tipo,
-          })
-          .eq('id_solicitud', this.editSolicitudId);
-        if (error) throw error;
-
-        this.showOverlay = false;
-        this.isEditing = false;
-        await this.fetchSolicitudes();
-      } catch (error) {
-        console.error('Error updating solicitud:', error.message);
-      }
-    },
     formatFecha(fecha) {
-      const date = new Date(fecha);
-      const day = String(date.getDate()).padStart(2, '0');
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const year = date.getFullYear();
-      return `${day}/${month}/${year}`;
-    },
-    async logout() {
-      const { error } = await supabase.auth.signOut();
-      if (!error) {
-        localStorage.removeItem('user');
-        this.$router.push({ name: 'Login' });
-      } else {
-        console.error('Error al cerrar sesión:', error.message);
-      }
+      return new Intl.DateTimeFormat('es-CL', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+      }).format(new Date(fecha));
     },
   },
 };
 </script>
+
 
 <style scoped>
 
@@ -366,55 +317,6 @@ export default {
   color: white;
 }
 
-.nav-bar {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background-color: rgba(19, 35, 47, 0.9);
-  padding: 1rem;
-  color: white;
-}
-.user-info-container {
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-.company-name {
-  font-size: 1.2rem;
-  font-weight: bold;
-  color: #1ab188;
-}
-.menu-container {
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-  align-items: center;
-}
-.menu-items {
-  display: flex;
-  gap: 1rem;
-}
-.menu-item {
-  color: white;
-  text-decoration: none;
-  transition: color 0.2s ease-in-out;
-}
-.menu-item:hover {
-  color: #1ab188;
-}
-.logout-button {
-  background-color: #1ab188;
-  border: none;
-  color: white;
-  padding: 0.5rem 1rem;
-  cursor: pointer;
-  transition: background 0.2s ease-in-out;
-}
-.logout-button:hover {
-  background-color: #0b9185;
-}
 .add-solicitud-container {
   margin-top: 1rem;
   text-align: center;
