@@ -31,10 +31,10 @@
   
       <!-- Botones de acciones para la solicitud -->
       <div class="action-buttons">
-        <button @click="takeRequest" class="action-button">Tomar Solicitud</button>
-        <button @click="approveRequest" class="action-button">Aprobar Solicitud</button>
-        <button @click="showRechazoOverlay = true" class="action-button">Rechazar Solicitud</button>
-        <button @click="showOverlay = true" class="action-button">Agregar Archivo</button>
+        <button v-if="userType === 'Inmobiliaria' && solicitud && solicitud.estado === 'Nueva Solicitud'" @click="takeRequest" class="action-button">Tomar Solicitud</button>
+        <button v-if="userType === 'Inmobiliaria' && solicitud && solicitud.estado === 'En Proceso'" @click="approveRequest" class="action-button">Aprobar Solicitud</button>
+        <button v-if="userType === 'Inmobiliaria' && solicitud && solicitud.estado === 'En Proceso'" @click="showRechazoOverlay = true" class="action-button">Rechazar Solicitud</button>
+        <button v-if="userType === 'Broker'" @click="showOverlay = true" class="action-button">Agregar Archivo</button>
       </div>
   
       <!-- Overlay de subida de archivos -->
@@ -94,7 +94,7 @@ export default {
       return {
         solicitud: null,
         archivos: [], // Datos de archivos
-        userType: JSON.parse(localStorage.getItem('user')).type,
+        userType: JSON.parse(localStorage.getItem('user')).userType,
         userId: JSON.parse(localStorage.getItem('user')).id,
         showOverlay: false,
         showRechazoOverlay: false,

@@ -42,6 +42,8 @@
     },
     methods: {
       async fetchUserData(userId) {
+        let user = JSON.parse(localStorage.getItem('user')) || {};
+
         try {
           const { data: brokerData, error: brokerError } = await supabase
             .from('broker')
@@ -53,12 +55,22 @@
             this.userName = brokerData.nombre;
             this.userType = 'Broker';
             this.id_broker = brokerData.id_broker;
+
+            // Agrega los datos al objeto 'user' en localStorage
+            user = {
+              ...user,
+              userName: this.userName,
+              userType: this.userType,
+              id_broker: this.id_broker,
+            };
+            localStorage.setItem('user', JSON.stringify(user));
+
             return;
           }
         } catch (error) {
           console.error('Error fetching broker data:', error.message);
         }
-  
+
         try {
           const { data: inmobiliariaData, error: inmobiliariaError } = await supabase
             .from('inmobiliaria')
@@ -70,12 +82,21 @@
             this.userName = inmobiliariaData.nombre;
             this.userType = 'Inmobiliaria';
             this.id_inmobiliaria = inmobiliariaData.id_inmobiliaria;
+
+            // Agrega los datos al objeto 'user' en localStorage
+            user = {
+              ...user,
+              userName: this.userName,
+              userType: this.userType,
+              id_inmobiliaria: this.id_inmobiliaria,
+            };
+            localStorage.setItem('user', JSON.stringify(user));
           }
         } catch (error) {
           console.error('Error fetching inmobiliaria data:', error.message);
         }
       },
-  
+
       async logout() {
         const { error } = await supabase.auth.signOut();
         if (!error) {
@@ -86,6 +107,7 @@
         }
       },
     },
+
   };
   </script>
   

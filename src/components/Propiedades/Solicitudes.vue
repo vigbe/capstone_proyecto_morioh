@@ -63,7 +63,7 @@
             <td>
               <img src="@/assets/edit-icon.png" alt="Editar" title="Editar" class="action-icon" @click="editSolicitud(solicitud)" />
               <img src="@/assets/ver-icon.png" alt="Ver" title="Ver" class="action-icon" @click="viewSolicitud(solicitud.id_solicitud)" />
-              <img src="@/assets/delete-icon.png" alt="Eliminar" title="Eliminar" class="action-icon" @click="deleteSolicitud(solicitud.id)" />
+              <img src="@/assets/delete-icon.png" alt="Eliminar" title="Eliminar" class="action-icon" @click="deleteSolicitud(solicitud.id_solicitud)" />
             </td>
           </tr>
         </tbody>
