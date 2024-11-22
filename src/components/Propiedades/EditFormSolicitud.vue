@@ -28,7 +28,7 @@
         <!-- Campo Inmobiliaria -->
         <div class="form-group">
           <label for="inmobiliaria">Inmobiliaria</label>
-          <select v-model="solicitud.id_inmobiliaria" id="id_inmobiliaria" @change="filterProperties" :disabled="solicitud.tipo === 'Nuevo Cliente'" required>
+          <select v-model="solicitud.id_inmobiliaria" id="id_inmobiliaria" @change="filterProperties" required>
             <option disabled value="">Seleccione una inmobiliaria</option>
             <option v-for="inmobiliaria in inmobiliarias" :key="inmobiliaria.id_inmobiliaria" :value="inmobiliaria.id_inmobiliaria">
               {{ inmobiliaria.nombre }}

@@ -11,8 +11,8 @@
       <div class="menu-container">
         <div class="menu-items">
           <router-link to="/solicitudes" class="menu-item">Solicitudes</router-link>
-          <router-link to="/marketplace" class="menu-item">Marketplace</router-link>
-          <router-link to="/clientes" class="menu-item">Clientes</router-link>
+          <router-link v-if="userType === 'Broker'" to="/marketplace" class="menu-item">Marketplace</router-link>
+          <router-link v-if="userType === 'Broker'" to="/clientes" class="menu-item">Clientes</router-link>
           <router-link v-if="userType === 'Inmobiliaria'" to="/cargar-propiedades" class="menu-item">Cargar Propiedades</router-link>
         </div>
         <button @click="logout" class="logout-button">Cerrar Sesión</button>

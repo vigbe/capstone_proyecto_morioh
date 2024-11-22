@@ -68,6 +68,9 @@
           </tr>
         </tbody>
       </table>
+      <div class="add-solicitud-container">
+        <button class="add-solicitud-button" @click="openAddSolicitudForm">Agregar Solicitud</button>
+      </div>
     </div>
   </div>
 

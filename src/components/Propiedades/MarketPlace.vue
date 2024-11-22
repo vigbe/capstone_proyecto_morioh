@@ -60,6 +60,7 @@
         class="propiedad"
         v-for="propiedad in propiedadesFiltradas"
         :key="propiedad.id_propiedad"
+        @click="goToPropertyDetail(propiedad.id_propiedad)"
       >
         <div class="propiedad-image">
           <div v-if="propiedad.fotos && propiedad.fotos.length > 0" class="carousel">
@@ -76,16 +77,17 @@
               </div>
             </div>
             <button
+              v-if="currentSlide[propiedad.id_propiedad] > 0"
               class="carousel-control prev"
               @click="prevSlide(propiedad.id_propiedad)"
-              :disabled="currentSlide[propiedad.id_propiedad] === 0"
             >
               &#10094;
             </button>
+
             <button
+              v-if="currentSlide[propiedad.id_propiedad] < propiedad.fotos.length - 1"
               class="carousel-control next"
               @click="nextSlide(propiedad.id_propiedad, propiedad.fotos.length)"
-              :disabled="currentSlide[propiedad.id_propiedad] === propiedad.fotos.length - 1"
             >
               &#10095;
             </button>
@@ -94,8 +96,16 @@
         <div class="propiedad-content">
           <h3>{{ propiedad.titulo }}</h3>
           <p>{{ propiedad.descripcion }}</p>
-          <p>Precio: {{ propiedad.precio }}</p>
+          <p>Precio: {{ formatPrice(propiedad.precio) }}</p>
           <p>Ubicación: {{ propiedad.ubicacion }}</p>
+          <div class="property-icons">
+            <div class="icon-item">
+              <i class="fas fa-bath"></i> {{ propiedad.num_banos }} Baños
+            </div>
+            <div class="icon-item">
+              <i class="fas fa-bed"></i> {{ propiedad.num_habitaciones }} Habitaciones
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -228,6 +238,20 @@ export default {
         this.loading = false; // Ocultar indicador después de un retraso
       }, 500); // Simular un retraso de 500 ms
     },
+
+    formatPrice(value) {
+      if (!value) return "$0";
+      return new Intl.NumberFormat("es-CL", {
+        style: "currency",
+        currency: "CLP",
+        minimumFractionDigits: 0, // Sin decimales
+      }).format(value);
+    },
+
+    goToPropertyDetail(id) {
+      this.$router.push({ name: "DetallePropiedad", params: { id_propiedad: id } });
+    },
+
     prevSlide(propiedadId) {
       if (this.currentSlide[propiedadId] > 0) {
         this.currentSlide[propiedadId]--;
@@ -346,12 +370,14 @@ export default {
   width: 100%; /* Asegura que ocupa todo el contenedor */
   overflow: visible;/* Evita que el contenido adicional sobresalga */
   z-index: 1; /* Las imágenes deben estar visibles */
+  align-items: center;
 }
 
 .carousel-item {
   min-width: 100%; /* Cada slide ocupa el 100% del ancho del contenedor */
   height: 100%; /* Se adapta a la altura del carrusel */
   position: relative; /* Garantiza que las imágenes se posicionen dentro del slide */
+
 }
 
 .carousel-item img {
@@ -438,4 +464,24 @@ export default {
   font-style: italic;
   color: #888;
 }
+
+.property-icons {
+  display: flex;
+  gap: 1rem;
+  margin-top: 10px;
+}
+
+.icon-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 14px;
+  color: #555;
+}
+
+.icon-item i {
+  font-size: 18px;
+  color: #1ab188;
+}
+
 </style>
