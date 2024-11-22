@@ -5,7 +5,7 @@
       <h2>Filtros</h2>
       <label>
         Tipo de Propiedad:
-        <select v-model="filters.tipo">
+        <select v-model="filters.tipo" @change="applyFilters">
           <option value="">Todos</option>
           <option value="Casa">Casa</option>
           <option value="Departamento">Departamento</option>
@@ -13,12 +13,41 @@
       </label>
       <label>
         Precio Máximo:
-        <input type="number" v-model="filters.precioMaximo" placeholder="Ej: 1000000" />
+        <input
+          type="number"
+          v-model="filters.precioMaximo"
+          placeholder="Ej: 1000000"
+          @input="applyFilters"
+        />
       </label>
       <label>
-        Ubicación:
-        <input type="text" v-model="filters.ubicacion" placeholder="Ej: Santiago" />
+        País:
+        <select v-model="filters.pais" @change="filterDistritos">
+          <option value="">Todos</option>
+          <option v-for="pais in paises" :key="pais.id" :value="pais.id">
+            {{ pais.nombre }}
+          </option>
+        </select>
       </label>
+      <label>
+        Distrito:
+        <select v-model="filters.distrito" @change="filterCiudades" :disabled="!filters.pais">
+          <option value="">Todos</option>
+          <option v-for="distrito in distritosFiltrados" :key="distrito.id" :value="distrito.id">
+            {{ distrito.nombre }}
+          </option>
+        </select>
+      </label>
+      <label>
+        Ciudad:
+        <select v-model="filters.ciudad" @change="applyFilters" :disabled="!filters.pais || !filters.distrito">
+          <option value="">Todos</option>
+          <option v-for="ciudad in ciudadesFiltradas" :key="ciudad.id" :value="ciudad.id">
+            {{ ciudad.nombre }}
+          </option>
+        </select>
+      </label>
+    
     </div>
 
     <div class="propiedades-list">
@@ -62,7 +91,7 @@
             </button>
           </div>
         </div>
-        <div class="propiedad-info">
+        <div class="propiedad-content">
           <h3>{{ propiedad.titulo }}</h3>
           <p>{{ propiedad.descripcion }}</p>
           <p>Precio: {{ propiedad.precio }}</p>
@@ -74,8 +103,8 @@
 </template>
 
 <script>
-import supabase from '../../supabase';
-import NavBar from '../NavBar.vue';
+import supabase from "../../supabase";
+import NavBar from "../NavBar.vue";
 
 export default {
   components: {
@@ -84,10 +113,15 @@ export default {
   data() {
     return {
       propiedades: [],
+      paises: [],
+      distritos: [],
+      ciudades: [],
       filters: {
-        tipo: '',
-        precioMaximo: '',
-        ubicacion: '',
+        tipo: "",
+        precioMaximo: "",
+        pais: "",
+        distrito: "",
+        ciudad: "",
       },
       loading: true,
       currentSlide: {}, // Almacena el índice del slide actual por propiedad
@@ -99,57 +133,120 @@ export default {
         return (
           (!this.filters.tipo || propiedad.tipo === this.filters.tipo) &&
           (!this.filters.precioMaximo || propiedad.precio <= this.filters.precioMaximo) &&
-          (!this.filters.ubicacion ||
-            propiedad.ubicacion.toLowerCase().includes(this.filters.ubicacion.toLowerCase()))
+          (!this.filters.pais || propiedad.id_pais === this.filters.pais) &&
+          (!this.filters.distrito || propiedad.id_distrito === this.filters.distrito) &&
+          (!this.filters.ciudad || propiedad.id_ciudad === this.filters.ciudad)
         );
       });
     },
+    distritosFiltrados() {
+      if (!this.filters.pais) return [];
+      return this.distritos.filter(
+        (distrito) => distrito.id_pais === this.filters.pais
+      );
+  },
+    ciudadesFiltradas() {
+      if (!this.filters.distrito) return [];
+      return this.ciudades.filter(
+        (ciudad) => ciudad.id_distrito === this.filters.distrito
+      );
+  },
+
   },
   methods: {
     async fetchPropiedades() {
       try {
-        const { data, error } = await supabase.from('propiedad').select('*, foto(*)');
+        const { data, error } = await supabase
+          .from("propiedad")
+          .select("*, foto(*)");
         if (error) {
           throw error;
         }
         this.propiedades = data.map((propiedad) => ({
           ...propiedad,
-          fotos: propiedad.foto ? (Array.isArray(propiedad.foto) ? propiedad.foto : [propiedad.foto]) : [],
+          fotos: propiedad.foto
+            ? Array.isArray(propiedad.foto)
+              ? propiedad.foto
+              : [propiedad.foto]
+            : [],
         }));
 
         // Inicializar el índice del slide actual para cada propiedad
         this.propiedades.forEach((propiedad) => {
-          this.currentSlide[propiedad.id_propiedad] = 0; // Inicializar directamente
+          this.currentSlide[propiedad.id_propiedad] = 0;
         });
       } catch (error) {
-        console.error('Error al obtener propiedades:', error.message);
+        console.error("Error al obtener propiedades:", error.message);
       } finally {
         this.loading = false;
       }
     },
+    async fetchDropdownData() {
+      try {
+        const { data: paisesData, error: paisesError } = await supabase
+          .from("pais")
+          .select("id_pais, nombre_pais");
+        if (paisesError) throw paisesError;
+        this.paises = paisesData.map((pais) => ({
+          id: pais.id_pais,
+          nombre: pais.nombre_pais,
+        }));
+
+        const { data: distritosData, error: distritosError } = await supabase
+          .from("distrito")
+          .select("id_distrito, nombre_distrito, id_pais");
+        if (distritosError) throw distritosError;
+        this.distritos = distritosData.map((distrito) => ({
+          id: distrito.id_distrito,
+          nombre: distrito.nombre_distrito,
+          id_pais: distrito.id_pais,
+        }));
+
+        const { data: ciudadesData, error: ciudadesError } = await supabase
+          .from("ciudad")
+          .select("id, nombre, id_distrito");
+        if (ciudadesError) throw ciudadesError;
+        this.ciudades = ciudadesData.map((ciudad) => ({
+          id: ciudad.id,
+          nombre: ciudad.nombre,
+          id_distrito: ciudad.id_distrito,
+        }));
+      } catch (error) {
+        console.error("Error fetching dropdown data:", error.message);
+      }
+    },
+    filterDistritos() {
+      this.filters.distrito = ""; // Reiniciar el filtro de distrito
+      this.filters.ciudad = ""; // Reiniciar el filtro de ciudad
+    },
+    filterCiudades() {
+      this.filters.ciudad = ""; // Reiniciar el filtro de ciudad
+    },
+    applyFilters() {
+      this.loading = true; // Mostrar indicador de carga al aplicar filtros
+      setTimeout(() => {
+        this.loading = false; // Ocultar indicador después de un retraso
+      }, 500); // Simular un retraso de 500 ms
+    },
     prevSlide(propiedadId) {
       if (this.currentSlide[propiedadId] > 0) {
         this.currentSlide[propiedadId]--;
-        console.log('Slide anterior:', this.currentSlide[propiedadId]);
       }
     },
     nextSlide(propiedadId, totalSlides) {
       if (this.currentSlide[propiedadId] < totalSlides - 1) {
         this.currentSlide[propiedadId]++;
-        this.$nextTick(() => {
-          const container = document.querySelector('.carousel-inner');
-          container.style.display = 'none'; // Ocultar temporalmente
-          container.offsetHeight; // Forzar un reflujo
-          container.style.display = ''; // Mostrar nuevamente
-        });
       }
     },
   },
   async created() {
+    await this.fetchDropdownData();
     await this.fetchPropiedades();
   },
 };
 </script>
+
+
 
 <style scoped>
 .marketplace {
@@ -158,16 +255,53 @@ export default {
 
 .filters {
   margin-bottom: 2rem;
-  background: rgba(19, 35, 47, 0.9);
-  padding: 1rem;
-  border-radius: 5px;
-  color: white;
+  background: #f9f9f9; /* Fondo claro */
+  padding: 1.5rem;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Sombra suave */
+  display: grid; /* Usar CSS Grid */
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Dos filtros por fila */
+  gap: 1rem; /* Espacio entre filtros */
+  align-items: center; /* Alinear verticalmente los elementos */
+}
+
+.filters h2 {
+  grid-column: span 2; /* Hacer que el título ocupe toda la fila */
+  font-size: 20px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 1rem;
 }
 
 .filters label {
-  display: block;
-  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+  color: #555;
 }
+
+.filters select,
+.filters input {
+  padding: 0.8rem;
+  font-size: 14px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  outline: none;
+  transition: border-color 0.3s;
+}
+
+.filters select:hover,
+.filters input:hover {
+  border-color: #007BFF;
+}
+
+.filters select:focus,
+.filters input:focus {
+  border-color: #007BFF;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+}
+
+
 
 .propiedades-list {
   display: grid;
@@ -179,9 +313,16 @@ export default {
   background: white;
   padding: 1rem;
   border-radius: 5px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Sombra suave */
   margin-bottom: 2rem;
+  transition: transform 0.3s, box-shadow 0.3s; /* Animación suave para hover */
 }
+
+.propiedad:hover {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2); /* Más sombra al hacer hover */
+  transform: translateY(-5px); /* Pequeño efecto de elevación */
+}
+
 
 .propiedad-image {
   position: relative;
@@ -248,5 +389,53 @@ export default {
 .no-results {
   text-align: center;
   color: #ff6b6b;
+}
+
+.propiedad-content {
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.propiedad-content h4 {
+  font-size: 14px;
+  color: #888;
+  margin: 0;
+}
+
+.propiedad-content h2 {
+  font-size: 18px;
+  margin: 5px 0;
+  font-weight: bold;
+  color: #333;
+}
+
+.propiedad-precio {
+  font-size: 20px;
+  color: #007BFF;
+  margin: 10px 0;
+  font-weight: bold;
+}
+
+.badge {
+  display: inline-block;
+  background: #007BFF;
+  color: #fff;
+  padding: 4px 10px;
+  font-size: 12px;
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+.propiedad-content p {
+  margin: 5px 0;
+  font-size: 14px;
+  color: #555;
+}
+
+.propiedad-content p:last-of-type {
+  font-style: italic;
+  color: #888;
 }
 </style>

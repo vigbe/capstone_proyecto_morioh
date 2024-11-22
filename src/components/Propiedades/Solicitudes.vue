@@ -1,33 +1,63 @@
 <template>
   <NavBar />
   <div class="solicitudes">
-    <!-- Barra de navegación -->
-
-    <!-- Tabla de solicitudes -->
     <div class="table-container">
       <h2>Solicitudes</h2>
+      <!-- Campo de búsqueda -->
+      <div class="search-container">
+        <input
+          type="text"
+          v-model="searchQuery"
+          placeholder="Buscar por cliente, broker, inmobiliaria o estado..."
+          class="search-input"
+        />
+      </div>
       <table class="solicitudes-table">
         <thead>
           <tr>
-            <th>ID Solicitud</th>
-            <th>Fecha de Solicitud</th>
-            <th>Estado</th>
-            <th>Tipo</th>
-            <th>Broker</th>
-            <th>Cliente</th>
-            <th>Inmobiliaria</th>
-            <th>Propiedad</th>
+            <th @click="sortTable('id_solicitud')">
+              ID Solicitud
+              <span v-if="sortKey === 'id_solicitud'">{{ sortDirection === 'asc' ? '▲' : '▼' }}</span>
+            </th>
+            <th @click="sortTable('fecha_solicitud')">
+              Fecha de Solicitud
+              <span v-if="sortKey === 'fecha_solicitud'">{{ sortDirection === 'asc' ? '▲' : '▼' }}</span>
+            </th>
+            <th @click="sortTable('estado')">
+              Estado
+              <span v-if="sortKey === 'estado'">{{ sortDirection === 'asc' ? '▲' : '▼' }}</span>
+            </th>
+            <th @click="sortTable('tipo')">
+              Tipo
+              <span v-if="sortKey === 'tipo'">{{ sortDirection === 'asc' ? '▲' : '▼' }}</span>
+            </th>
+            <th @click="sortTable('broker_nombre')">
+              Broker
+              <span v-if="sortKey === 'broker_nombre'">{{ sortDirection === 'asc' ? '▲' : '▼' }}</span>
+            </th>
+            <th @click="sortTable('cliente_nombre')">
+              Cliente
+              <span v-if="sortKey === 'cliente_nombre'">{{ sortDirection === 'asc' ? '▲' : '▼' }}</span>
+            </th>
+            <th @click="sortTable('inmobiliaria_nombre')">
+              Inmobiliaria
+              <span v-if="sortKey === 'inmobiliaria_nombre'">{{ sortDirection === 'asc' ? '▲' : '▼' }}</span>
+            </th>
+            <th @click="sortTable('propiedad_titulo')">
+              Propiedad
+              <span v-if="sortKey === 'propiedad_titulo'">{{ sortDirection === 'asc' ? '▲' : '▼' }}</span>
+            </th>
             <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="solicitud in tasks" :key="solicitud.id">
+          <tr v-for="solicitud in filteredAndSortedSolicitudes" :key="solicitud.id_solicitud">
             <td>{{ solicitud.id_solicitud }}</td>
             <td>{{ solicitud.fecha_solicitud }}</td>
             <td>{{ solicitud.estado }}</td>
             <td>{{ solicitud.tipo }}</td>
             <td>{{ solicitud.broker_nombre }}</td>
-            <td>{{solicitud.cliente_nombre}}</td>
+            <td>{{ solicitud.cliente_nombre }}</td>
             <td>{{ solicitud.inmobiliaria_nombre }}</td>
             <td>{{ solicitud.propiedad_titulo }}</td>
             <td>
@@ -39,11 +69,7 @@
         </tbody>
       </table>
     </div>
-
-    <!-- Botón para agregar solicitud -->
-    <div class="add-solicitud-container">
-      <button class="add-solicitud-button" @click="openAddSolicitudForm">Agregar Solicitud</button>
-    </div>
+  </div>
 
     <!-- Overlay de formulario de solicitud -->
     <EditFormSolicitud
@@ -59,7 +85,6 @@
       @add-solicitud="addSolicitud"
       @update-solicitud="updateSolicitud"
      />
-  </div>
 </template>
 
 <script>
@@ -71,6 +96,9 @@ export default {
   components: { EditFormSolicitud,NavBar },
   data() {
     return {
+      searchQuery: "", // Almacena el texto de búsqueda
+      sortKey: "id_solicitud", // Columna por la cual se está ordenando
+      sortDirection: "asc",
       userName: '',
       userType: '',
       id_broker: null,
@@ -101,6 +129,38 @@ export default {
       await this.fetchDropdownData();
       await this.fetchSolicitudes();
     }
+  },
+  computed: {
+  filteredAndSortedSolicitudes() {
+      let solicitudes = this.tasks;
+
+      // Filtrado dinámico
+      if (this.searchQuery) {
+        const query = this.searchQuery.toLowerCase();
+        solicitudes = solicitudes.filter(
+          (solicitud) =>
+            solicitud.cliente_nombre.toLowerCase().includes(query) ||
+            solicitud.broker_nombre.toLowerCase().includes(query) ||
+            solicitud.inmobiliaria_nombre.toLowerCase().includes(query) ||
+            solicitud.estado.toLowerCase().includes(query) ||
+            solicitud.id_solicitud.toString().toLowerCase().includes(query)
+        );
+      }
+
+      // Ordenamiento dinámico
+      if (this.sortKey) {
+        solicitudes = solicitudes.sort((a, b) => {
+          let result = 0;
+
+          if (a[this.sortKey] > b[this.sortKey]) result = 1;
+          if (a[this.sortKey] < b[this.sortKey]) result = -1;
+
+          return this.sortDirection === "asc" ? result : -result;
+        });
+      }
+
+      return solicitudes;
+    },
   },
   methods: {
     viewSolicitud(id_solicitud) {
@@ -195,8 +255,18 @@ export default {
   } catch (error) {
     console.error('Error fetching solicitudes:', error.message);
   }
-}
-,
+ },
+
+  sortTable(column) {
+      if (this.sortKey === column) {
+        // Alternar entre ascendente y descendente
+        this.sortDirection = this.sortDirection === "asc" ? "desc" : "asc";
+      } else {
+        // Cambiar la columna de ordenamiento
+        this.sortKey = column;
+        this.sortDirection = "asc";
+      }
+    },
     openAddSolicitudForm() {
       this.newSolicitud = { 
         tipo: '',
@@ -350,4 +420,34 @@ export default {
   width: 400px;
   max-width: 90%;
 }
+
+.search-container {
+  margin-bottom: 1rem;
+  text-align: left;
+}
+
+.search-input {
+  padding: 0.5rem;
+  font-size: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  width: 100%;
+  max-width: 300px;
+}
+
+.solicitudes-table th {
+  cursor: pointer;
+  position: relative;
+}
+
+.solicitudes-table th span {
+  margin-left: 5px;
+  font-size: 0.8rem;
+  color: #555;
+}
+
+.solicitudes-table th:hover {
+  background-color: #159c80;
+}
+
 </style>

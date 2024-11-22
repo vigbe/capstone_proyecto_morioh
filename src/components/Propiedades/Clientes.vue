@@ -1,52 +1,73 @@
 <template>
   <NavBar/>
 
-    <div class="clientes">
-      <!-- Barra de navegación -->
-  
-      <!-- Tabla de clientes -->
-      <div class="table-container">
-        <h2>Clientes</h2>
-        <table class="clientes-table">
-          <thead>
-            <tr>
-              <th>ID Cliente</th>
-              <th>Nombre</th>
-              <th>Apellido</th>
-              <th>Email</th>
-              <th>Teléfono</th>
-              <th>Dirección</th>
-              <th>Distrito</th>
-              <th>País</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="cliente in clients" :key="cliente.id_cliente">
-              <td>{{ cliente.id_cliente }}</td>
-              <td>{{ cliente.nombre }}</td>
-              <td>{{ cliente.apellido }}</td>
-              <td>{{ cliente.email }}</td>
-              <td>{{ cliente.telefono }}</td>
-              <td>{{ cliente.direccion }}</td>
-              <td>{{ cliente.distrito_nombre }}</td>
-              <td>{{ cliente.pais_nombre }}</td>
-              <td>
-                <img src="@/assets/edit-icon.png" alt="Editar" title="Editar" class="action-icon" @click="editClient(cliente)" />
-                <img src="@/assets/delete-icon.png" alt="Eliminar" title="Eliminar" class="action-icon" @click="deleteClient(cliente.id_cliente)" />
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-  
-      <!-- Botón para agregar cliente -->
-      <div class="add-client-container">
-        <button class="add-client-button" @click="openAddClientForm">Agregar Cliente</button>
-      </div>
-  
-      <!-- Overlay de formulario para agregar/editar cliente -->
-      <FormClienteOverlay
+  <div class="clientes">
+  <div class="table-container">
+    <h2>Clientes</h2>
+    <!-- Input de búsqueda -->
+    <div class="search-container">
+      <input
+        type="text"
+        v-model="searchQuery"
+        placeholder="Buscar por nombre, apellido o email..."
+        class="search-input"
+      />
+    </div>
+    <table class="clientes-table">
+      <thead>
+        <tr>
+          <th @click="sortTable('id_cliente')">
+            ID Cliente
+            <span v-if="sortKey === 'id_cliente'">{{ sortDirection === 'asc' ? '▲' : '▼' }}</span>
+          </th>
+          <th @click="sortTable('nombre')">
+            Nombre
+            <span v-if="sortKey === 'nombre'">{{ sortDirection === 'asc' ? '▲' : '▼' }}</span>
+          </th>
+          <th @click="sortTable('apellido')">
+            Apellido
+            <span v-if="sortKey === 'apellido'">{{ sortDirection === 'asc' ? '▲' : '▼' }}</span>
+          </th>
+          <th @click="sortTable('email')">
+            Email
+            <span v-if="sortKey === 'email'">{{ sortDirection === 'asc' ? '▲' : '▼' }}</span>
+          </th>
+          <th @click="sortTable('telefono')">
+            Teléfono
+            <span v-if="sortKey === 'telefono'">{{ sortDirection === 'asc' ? '▲' : '▼' }}</span>
+          </th>
+          <th @click="sortTable('direccion')">
+            Dirección
+            <span v-if="sortKey === 'direccion'">{{ sortDirection === 'asc' ? '▲' : '▼' }}</span>
+          </th>
+          <th>Distrito</th>
+          <th>País</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="cliente in filteredAndSortedClients" :key="cliente.id_cliente">
+          <td>{{ cliente.id_cliente }}</td>
+          <td>{{ cliente.nombre }}</td>
+          <td>{{ cliente.apellido }}</td>
+          <td>{{ cliente.email }}</td>
+          <td>{{ cliente.telefono }}</td>
+          <td>{{ cliente.direccion }}</td>
+          <td>{{ cliente.distrito_nombre }}</td>
+          <td>{{ cliente.pais_nombre }}</td>
+          <td>
+            <img src="@/assets/edit-icon.png" alt="Editar" title="Editar" class="action-icon" @click="editClient(cliente)" />
+            <img src="@/assets/delete-icon.png" alt="Eliminar" title="Eliminar" class="action-icon" @click="deleteClient(cliente.id_cliente)" />
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+  </div>
+</div>
+
+
+    <FormClienteOverlay
         :visible="showOverlay"
         :isEditing="isEditing"
         :clientData="selectedClient"
@@ -56,7 +77,6 @@
         @add-client="addClient"
         @update-client="updateClient"
       />
-    </div>
   </template>
   
   <script>
@@ -68,6 +88,9 @@
     components: { NavBar,FormClienteOverlay },
     data() {
       return {
+        searchQuery: "", // Almacena el texto de búsqueda
+        sortKey: "id_cliente", // Columna por la que se está ordenando
+        sortDirection: "asc",
         userName: '',
         userType: '',
         id_broker: null,
@@ -89,6 +112,38 @@
         await this.fetchDropdownData();
         await this.fetchClients();
       }
+    },
+    computed: {
+  filteredAndSortedClients() {
+    let clients = this.clients;
+
+        // Filtrar por búsqueda
+        if (this.searchQuery) {
+          const query = this.searchQuery.toLowerCase();
+          clients = clients.filter(
+            (client) =>
+              client.nombre.toLowerCase().includes(query) ||
+              client.apellido.toLowerCase().includes(query) ||
+              client.email.toLowerCase().includes(query) ||
+              client.telefono.toLowerCase().includes(query) ||
+              client.direccion.toLowerCase().includes(query)
+          );
+        }
+
+        // Ordenar por columna seleccionada
+        if (this.sortKey) {
+          clients = clients.sort((a, b) => {
+            let result = 0;
+
+            if (a[this.sortKey] > b[this.sortKey]) result = 1;
+            if (a[this.sortKey] < b[this.sortKey]) result = -1;
+
+            return this.sortDirection === "asc" ? result : -result;
+          });
+        }
+
+        return clients;
+      },
     },
     methods: {
       async fetchUserData(userId) {
@@ -146,6 +201,14 @@
           }));
         } catch (error) {
           console.error('Error fetching clients:', error.message);
+        }
+      },
+      sortTable(column) {
+        if (this.sortKey === column) {
+          this.sortDirection = this.sortDirection === "asc" ? "desc" : "asc";
+        } else {
+          this.sortKey = column;
+          this.sortDirection = "asc";
         }
       },
       openAddClientForm() {
@@ -282,5 +345,36 @@
   .add-client-button:hover {
     background-color: #0b9185;
   }
+
+  .search-container {
+  margin-bottom: 1rem;
+  text-align: left;
+}
+
+.search-input {
+  padding: 0.5rem;
+  font-size: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  width: 100%;
+  max-width: 300px;
+}
+
+.clientes-table th {
+  cursor: pointer;
+  position: relative;
+}
+
+.clientes-table th span {
+  margin-left: 5px;
+  font-size: 0.8rem;
+  color: #555;
+}
+
+.clientes-table th:hover {
+  background-color: #159c80;
+}
+
+
   </style>
   
