@@ -1,0 +1,7 @@
+{
+    "watch": ["src", "index.js"], 
+    "ext": "js,json,vue",          
+    "ignore": ["dist/*"],         
+    "exec": "node index.js"        
+  }
+  
